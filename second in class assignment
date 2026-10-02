@@ -1,0 +1,67 @@
+suppressPackageStartupMessages({
+  library(tidyverse)
+  library(knitr)
+  library(kableExtra)
+})
+
+countries <- read.table(
+  "C:/Users/msnik/Downloads/countries.txt",
+  header = TRUE,
+  stringsAsFactors = FALSE
+)
+
+dim(countries)
+cat("The countries data set includes", nrow(countries), "countries.\n")
+
+regions <- read.table(
+  "C:/Users/msnik/Downloads/regions.txt",
+  header = TRUE,
+  stringsAsFactors = FALSE
+)
+
+dim(regions)
+cat("The regions data set includes", nrow(regions), "countries.\n")
+
+analytical_data <- regions %>%
+  semi_join(countries, by = c("country_code" = "ISO"))
+
+region_counts <- analytical_data %>%
+  group_by(region) %>%
+  summarise(Count = n(), .groups = "drop") %>%
+  rename(Region = region)
+
+kable(
+  region_counts,
+  col.names = c("Region", "Count")
+)
+
+subregion_counts <- analytical_data %>%
+  group_by(sub_region) %>%
+  summarise(Count = n(), .groups = "drop") %>%
+  rename(`Sub-region` = sub_region)
+
+kable(
+  subregion_counts,
+  col.names = c("Sub-region", "Count")
+)
+
+plot_data <- analytical_data %>%
+  group_by(region, sub_region) %>%
+  summarise(Count = n(), .groups = "drop")
+
+ggplot(
+  plot_data,
+  aes(
+    x = reorder(sub_region, Count),
+    y = Count,
+    fill = region
+  )
+) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    x = "Sub-region",
+    y = "Number of countries",
+    fill = "Region"
+  ) +
+  theme_minimal()
